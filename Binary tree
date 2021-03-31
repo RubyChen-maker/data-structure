@@ -1,0 +1,336 @@
+#include<stdio.h>
+#include<malloc.h>
+#include<stdlib.h>
+#define bool int
+
+typedef char ElemType;            //默认数据类型 
+
+typedef struct node 
+{   ElemType data;               //数据元素
+    struct node *lchild;         //指向左孩子
+    struct node *rchild;         //指向右孩子
+} BTNode;
+typedef struct TreeNode{
+    char data;                            //数据元素 
+    struct TreeNode *lchild,*rchild;     //指向左，右孩子 
+    int ltag,rtag;                      //增加左，右两个标志域  
+}Tree,*BTree;
+
+/************************************************************************
+函数功能：销毁二叉树
+形式参数：T Tree类型 输入的二叉树 
+返回值：无 
+*************************************************************************/ 
+void DestroyBTree(Tree *&T)             //销毁二叉树
+{   if(T!=NULL)                      
+    {  DestroyBTree(T->lchild);         //先销毁左右孩子 
+       DestroyBTree(T->rchild);
+       free(T);                         //然后释放T空间 
+    }
+}
+
+/************************************************************************
+函数功能：遍历二叉树，并以括号表示法来输出二叉树 
+形式参数：T Tree类型 输入的二叉树 
+返回值：无 
+*************************************************************************/ 
+void DispBTree(Tree *T)                         //遍历二叉树
+{
+    if(T!=NULL)                                  //当T非空时 
+    {
+        printf("%c", T->data);                   //输出根结点值 
+        if(T->lchild!=NULL || T->rchild!=NULL)   //当左孩子或右孩子不为空时 
+        {
+            printf("(");                         //有子树时输出'(' 
+            DispBTree(T->lchild);                //递归处理左子树 
+            if(T->rchild!=NULL)                  //有右子树时输出',' 
+                printf(",");                     
+            DispBTree(T->rchild);                //递归处理右子树 
+            printf(")");                         //右子树输出完毕，再输出一个')' 
+        }
+    }
+}
+
+/************************************************************************
+函数功能：由先序序列pre和中序序列in构造二叉树 
+形式参数：pre 字符型 输入的先序序列 
+          in  字符型 输入的中序序列 
+		  n   整型   为先序序列和中序序列的长度 
+返回值：无 
+*************************************************************************/ 
+BTree Build_Tree(char *pre,char *in,int n){  //构造二叉树函数 
+	BTree T;                                 
+	char *p;
+    int k;
+    if (n<=0) return NULL;                   //先序序列为空时，返回空值 
+        T=(BTree)malloc(sizeof(Tree));       //创建二叉树结点*T
+        T->data=*pre;                        //数据元素来自先序序列 
+        T->ltag=0;                           //指向结点左孩子 
+        T->rtag=0;                           //指向结点右孩子 
+        for (p=in;p<in+n;p++)                //在中序序列中找等于*pre的位置k
+        if (*p==*pre)
+            break;
+        k=p-in;                              //k为根结点在in中的下标 
+        T->lchild=Build_Tree(pre+1,in,k);     //递归构造左子树
+        T->rchild=Build_Tree(pre+k+1,p+1,n-k-1); //递归构造右子树
+    return T;                                    //返回构造好的二叉树 
+}
+ 
+//定义栈结点 
+typedef struct Stack{
+    BTree data;           //BTree型存储结点数据元素 
+    struct Stack *next;   //指针域 
+}Stack,*PStack;
+
+typedef struct{
+    PStack top;           //栈顶结点 
+}LinkStack,*PLinkStack;
+
+/************************************************************************
+函数功能：初始化栈 
+形式参数：无
+返回值： S 初始化好后的栈 
+*************************************************************************/ 
+PLinkStack Init_Stack(void){
+    PLinkStack S;
+    S=(PLinkStack)malloc(sizeof(LinkStack)); //给栈分配空间 
+    if(S)                                    //栈不为0时，进行初始化 
+	{                              
+        S->top=NULL;     
+    }
+    return S; 
+}
+
+/************************************************************************
+函数功能：进栈算法，将进栈元素放在栈顶处 ，将二叉树进栈 
+形式参数：S 栈类型
+          t 二叉树类型 输入的待进栈的二叉树 
+返回值： 无
+*************************************************************************/ 
+void Push_Stack(PLinkStack S,BTree t){        //进栈 
+    PStack node;             
+    node=(PStack)malloc(sizeof(Stack));       //创建node结点用于存放t 
+    node->data=t;                             //插入node结点作为栈顶结点 
+    node->next=S->top;
+    S->top=node; 
+}
+
+/************************************************************************
+函数功能：判断栈是否为空，若栈为空则返回1，否则返回0 
+形式参数：S 栈类型
+返回值： 0 整型 表示栈非空 
+         1 整型 表示栈为空 
+*************************************************************************/ 
+bool Empty_Stack(PLinkStack S){           //判空 
+    if(S->top){                           //栈非空返回0  
+        return 0;
+    }else{                                //栈为空返回1 
+        return 1;
+    }
+} 
+
+/************************************************************************
+函数功能：出栈算法，返回该栈顶结点，并改变栈顶指针 
+形式参数：S 栈类型
+返回值： q 栈顶结点 表示出栈元素 
+*************************************************************************/ 
+PStack Pop_Stack(PLinkStack S){          //出栈 
+    PStack q;                            //将原栈顶结点top赋给新创建结点q 
+    q=S->top;                            
+    if(!Empty_Stack(S)){                  
+        S->top=S->top->next;             //改变栈顶结点 
+    }
+    return q;                            //返回原栈顶结点值 
+}
+
+/************************************************************************
+函数功能：取前序元素算法 
+形式参数：S 栈类型
+返回值： S->top 即表示当前栈顶元素 
+*************************************************************************/ 
+PStack Get_Top_Stack(PLinkStack S){      //取前序元素 
+    return S->top;                       //返回当前栈顶 
+} 
+
+
+ //以下三个函数为并列关系
+ /************************************************************************************************* 
+函数功能：非递归先序线索化二叉树算法，先看左子树， 找下一个结点的时候，再检测上一个结点的右结点 
+形式参数：T  二叉树
+          pre 二叉树结点 
+返回值： 无
+***************************************************************************************************/   
+void NonRecursion_Pre_Thread(BTree T,BTree *pre){   //非递归先序线索化二叉树
+  PLinkStack S;
+  S=Init_Stack();                                  //初始化栈S 
+  while(T || !Empty_Stack(S))
+  {
+      if(T && T->ltag==0)                          //指向左子树 
+	  {
+        printf("%c ",T->data);                     //遍历输出该点值 
+        if(*pre && (*pre)->rtag==1)                //上一个结点没有右子树 
+		{
+          (*pre)->rchild=T;                        //后继 
+          (*pre)->ltag=1;
+        }
+        if(T->lchild==NULL)                        // 无左子树 
+		{
+          T->lchild=*pre;                          //给结点T添加前驱线索 
+          (*pre)->ltag=1;
+          T->ltag=1; 
+        }
+        if(T->rchild==NULL)                        //无右子树 
+		{
+          T->rtag=1;                               //给结点T添加后继线索 
+        }
+        Push_Stack(S,T);                           //T进栈 
+        *pre=T;                                    //T，pre同步后移 
+        T=T->lchild; 
+      }
+	  else
+	  {
+          if(!Empty_Stack(S))
+		  {
+              T=Pop_Stack(S)->data; 
+              T=T->rchild;                         //指向右子树 
+          }
+		  else                                     //为空退出 
+		  {
+              exit(-1);
+          }    
+      }
+  }   
+}    
+
+/************************************************************************************************* 
+函数功能：非递归中序线索化二叉树算法，按 左-根-右的顺序，先找到最左边的节点，和先序线索一样 ,
+          先链接左子树，执行到下一个结点再看上次结点的右子树
+形式参数：T  二叉树
+          pre 二叉树结点 
+返回值： 无
+***************************************************************************************************/   
+void NonRecursion_In_Thread(BTree T,BTree *pre)  //非递归中序线索化二叉树 
+{
+  PLinkStack S;
+  S=Init_Stack();                                //初始化栈 
+  while(T || !Empty_Stack(S))
+  {
+      if(T)
+	  {
+          Push_Stack(S,T);                       //进栈 
+          T=T->lchild;    
+      }
+	  else
+	  {
+          T=Pop_Stack(S)->data;
+          printf("%c ",T->data);                  //遍历输出 
+          if(T->lchild==NULL)                     //无左子树 
+		  {
+              T->lchild=*pre;                    //给结点T添加前驱线索 
+              T->ltag=1;
+          }
+          if(T->rchild==NULL)                    //无右子树 
+		  {
+              T->rtag=1;                         //给T添加后继线索 
+          }
+          if(*pre && (*pre)->rtag==1)
+		  {
+              (*pre)->rchild=T; 
+          }
+          *pre=T;                                //同步后移 
+          T=T->rchild;
+      }
+  }
+}
+
+ /************************************************************************************************* 
+函数功能：非递归后序线索化二叉树算法，按左-右-根的顺序，然后思路同理 
+形式参数：T  二叉树
+          pre 二叉树结点 
+返回值： 无
+***************************************************************************************************/  
+void NonRecursion_Post_Thread(BTree T,BTree *pre)
+{
+    PLinkStack S1,S2;                        
+    S1=Init_Stack();
+    S2=Init_Stack();
+    while(T || !Empty_Stack(S2))
+	{
+        if(T)
+		{
+            Push_Stack(S1,T);               //进栈 
+            Push_Stack(S2,T);
+            T=T->rchild;
+        }
+		else
+		{
+            T=Pop_Stack(S2)->data;          //出栈 
+            T=T->lchild;
+        }
+    } 
+    while(!Empty_Stack(S1))
+	{
+        T=Pop_Stack(S1)->data; 
+        if(T->lchild==NULL)                  
+		{
+            T->lchild=*pre;
+            T->ltag=1;                      //添加前驱线索 
+        }
+        if(T->rchild==NULL)
+		{
+            T->rtag=1;                      //添加后继线索 
+        } 
+        if(*pre &&  (*pre)->rtag==1)
+		{
+            (*pre)->rchild=T;
+        } 
+        *pre=T;
+        printf("%c ",T->data);             //遍历输出 
+    } 
+} 
+
+
+
+int main()
+{
+	int i,l,m;
+    BTNode *bt;
+    BTree T,p=NULL;
+    ElemType pre[100];
+    ElemType in[100];
+    printf("请输入先序中序的长度（100以内）:");
+    scanf("%d",&m);
+    l=m+1;
+    printf("请输入先序序列:");
+    for(i=0;i<=l;i++)
+    {
+    	scanf("%c",&pre[i]);   //输入先序序列 
+	}
+	printf("请输入中序序列:");
+    for(i=0;i<=l;i++)
+    {
+    	scanf("%c",&in[i]);   //输入中序序列 
+	}
+	
+    printf("构造一棵二叉树b:\n");   
+    T=Build_Tree(pre,in,l);      //调用创造树的函数 
+    printf("括号表示法:");
+    DispBTree(T);        //遍历树 
+	printf("\n");
+	
+	//遍历时，选择前序，中序，后序中的任何一种，同时运行会发生错误 
+	
+    //printf("前序遍历为:\n") ;
+	//NonRecursion_Pre_Thread(T,&p);
+	
+	//printf("中序遍历为:\n") ;
+    //NonRecursion_In_Thread(T,&p);
+    
+    printf("后序遍历为:\n") ;
+    NonRecursion_Post_Thread(T,&p);
+
+    DestroyBTree(T);      //销毁栈释放空间 
+    return 0;
+
+}
+
