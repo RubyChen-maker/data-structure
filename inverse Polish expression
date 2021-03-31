@@ -1,0 +1,240 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+const int StackSize = 30;  //定义栈的大小 
+char result[30];      //接收转换结果，并添加空格
+char num;            //用来result数组的计数
+ 
+typedef struct Stack  //定义一个栈结构体
+{
+	char data[StackSize];
+	int top;          //栈顶指针 
+}StackType;
+ 
+/********************************************************
+函数功能：出栈处理
+形式参数：p 栈结构体
+返回值：x 字符型 栈顶元素 
+********************************************************/ 
+char Pop(StackType *p)        //出栈
+{
+	char x;
+	if(p->top == -1)         //栈空 
+	{
+		printf("under flow\n");  //向下溢出 
+		exit(0);
+	}
+	x = p->data[p->top--];    //栈顶元素改变 
+	return x;
+}
+
+/********************************************************
+函数功能：入栈处理
+形式参数：p 栈结构体
+      dat 字符型 
+返回值：无
+********************************************************/ 
+void Push(StackType *p, char dat)  //入栈
+{
+	if(p->top == StackSize -1)   //栈满
+	{
+		printf("over flow\n");   //上溢 
+		exit(0);
+	}
+	p->data[++p->top] = dat;     //栈顶改变 
+}
+
+/********************************************************
+函数功能：判断栈空，为空时返回1，不为空则返回0 
+形式参数：p 栈结构体
+返回值：0 或 1 整型 
+********************************************************/ 
+bool Emtry(StackType *p) //为空时返回1，不为空则返回0
+{
+	if(p->top == -1)     //栈空 
+		return 1;
+	return 0;
+} 
+
+/********************************************************
+函数功能：获取栈顶的数据 
+形式参数：p 栈结构体
+返回值：0 或 栈顶元素 字符型 
+********************************************************/ 
+char GetTop(StackType *p) //获取栈顶的数据
+{
+	if(p->top != -1)      //栈非空 
+		return p->data[p->top];  //返回栈顶元素 
+	return 0;
+}
+ 
+ 
+ /*************************************************************************** 
+函数功能：判断是运算符还是运算对象，返回0表示为运算符，返回1表示为运算对象 
+形式参数：op 字符型 表示输入的字符 
+返回值：0 或 1  整型  
+*****************************************************************************/ 
+ bool isNumber(char op) //判断是运算符还是运算对象
+ {
+	 switch(op)
+	 { 	
+		case ' ':
+		case '(':
+		case ')':
+		case '+':    	
+		case '-':    	
+		case '*':    	
+		case '/':
+		case '#':		return 0;    //运算符 
+		default :       return 1;	 //运算对象 
+	}
+ }
+ 
+ 
+/****************************************************************************
+函数功能：获取运算符的优先级，1为最高，且统计优先级
+形式参数：ch 字符型  指输入的字符 
+返回值：value 整型  意味着运算的优先级 
+*****************************************************************************/ 
+ int priority(char ch) //获取运算符的优先级，1为最高，且统计优先级
+ {
+	int value= 10;     //设定最低的优先级的值为10 
+	switch(ch)
+	{
+		case '(':
+		case ')':	value = 4;	break;  //当遇到左括号时，所有的符号都会进行入栈处理，直到遇到右括号，或者内部运算输出
+		case '*':	value = 2;	break;
+		case '/':	value = 2;	break;
+		case '+':	value = 3;  break;
+		case '-':	value = 3;	break;
+		case '#':	value = 5;	break;  //'#'为界限符，意味着字符串的开始和结束 
+		default:  break;
+	}
+	return value;
+ }
+ 
+ 
+/***************************************************************************** 
+函数功能：将字符串表达式转换成逆波兰表达式并输出	
+形式参数：arr 数组
+返回值：无
+******************************************************************************/
+void NiPost(char arr[])
+{
+	StackType* pStack = new StackType;     //创建栈 
+	pStack->top = -1;                      //栈空 
+	int i = 0;
+	char ch;
+	for(i=0;arr[i] != '\0';i++)
+	{
+		if(isNumber(arr[i]))        //是运算对象时 
+		{
+			result[num++] = arr[i];  //加入到result中 
+		}
+		else                      //不是对象时，即为运算符
+		{
+			if(Emtry(pStack) || arr[i] == '(')  //首先判断是否为空，如果为空，则入栈
+			{
+				Push(pStack, arr[i]);
+				continue;
+			}
+			if(arr[i] == '#')     //结束符号
+				break;
+			if(arr[i] == ')')     //出栈直到遇到'('
+			{
+				result[num++] = ' ';
+				while((ch = Pop(pStack)) != '(' ) //开始出栈，出到'('
+				{
+					result[num++] = ch;
+					result[num++] = ' ';   //添加空格符 
+				}
+				continue;
+			}
+			result[num++] = ' ';
+			//优先级比较
+			ch = priority(GetTop(pStack)) - priority(arr[i]);//获取优先级比较后的结果，当ch>0时，运算符优先级大于栈顶，=0相等，<0小于
+			if(ch > 0)    //优先级大于栈顶
+			{
+				//优先级大的入栈
+				Push(pStack, arr[i]);
+			}
+			//优先级小于或等于栈顶
+			else if(ch <= 0)
+			{
+				//出栈一个，然后判断优先级，假如不为空栈，继续判断优先级，然后将arr[i]入栈
+				while( priority(arr[i]) >= priority(GetTop(pStack)))//此运算符优先级小于等于栈顶时，一直输出
+				{
+					result[num++] = Pop(pStack);  //出栈 
+					result[num++] = ' ';
+				}
+				Push(pStack, arr[i]);			//入栈			
+			}
+ 
+		}
+ 
+	}
+	while(GetTop(pStack) != '#')   //字符串未完 
+	{
+		result[num++] = ' ';
+		result[num++] = Pop(pStack); //继续出栈 
+	}
+	for(i=0;i<num;i++)
+		printf("%c",result[i]);       //输出result中的元素 
+}
+ 
+ 
+/***************************************************************************** 
+函数功能：计算逆波兰表达式的值
+形式参数：arr 字符型 一个逆波兰表达式
+返回值：cal 整型 计算结果
+******************************************************************************/
+int Calculate(char arr[])
+{
+	int i, cal[10],top=-1;
+	memset(cal,0,sizeof(cal));
+	for(i=0;i<num;i++)
+	{
+		if(isNumber(arr[i]))//判断是否是操作符，返回1不是，进来的只能是数字
+		{
+			//模拟入栈
+			top++;
+			while(arr[i] != ' ')//获取一个整数，并入栈
+			{
+				cal[top] = cal[top]*10 + arr[i++]-48; //将字符转化成数字 
+			}
+		}
+		else
+		{
+			switch(arr[i])         //模拟出栈
+			{
+				case '+':	cal[top-1] = cal[top-1] + cal[top]; cal[top--] = 0; break;   //对转化后的数进行计算 
+				case '-':	cal[top-1] = cal[top-1] - cal[top]; cal[top--] = 0; break;
+				case '*':	cal[top-1] = cal[top-1] * cal[top]; cal[top--] = 0; break;
+				case '/':	cal[top-1] = cal[top-1] / cal[top]; cal[top--] = 0; break;
+				default: break;
+			}
+		}
+	}
+	return cal[0];  //返回计算值 
+}
+
+
+/***********************
+主函数 
+***********************/ 
+int main(void)
+{
+	int n;
+	char express[]="#5+(12-4*2)*6-9#";  //设定字符串 
+	printf("本题以 #5+(12-4*2)*6-9# 为例，字符串以#开始，以#结束\n"); 
+	printf("请输入数字加上运算符的总符号数(本例为16):\n");
+    scanf("%d",&n);
+    printf("逆波兰表达式为:\n");
+	NiPost(express);      //调用转换为逆波兰表达式的函数 
+	printf("\n");
+	printf("运算结果为：%d\n", Calculate(result));   //调用计算值函数 
+ 
+	return 0;
+}
+
