@@ -1,0 +1,157 @@
+#include<stdio.h>
+#include<string.h>
+#include<malloc.h> 
+
+typedef struct node //定义一个结构体 
+{
+	char str[1000];
+	struct node *next;  //指针域 
+} Strlist;
+
+/*********************************************************
+函数功能：创建一个单链表
+形式参数：sl 头结点
+返回值：无 
+**********************************************************/ 
+void CreateStrlist(Strlist *&sl) //创建一个链表 
+{
+	int n,i;
+	Strlist *s,*tc;                       //定义两个结点 
+	sl=(Strlist*)malloc(sizeof(Strlist)); //创建头结点，动态分配字符空间 
+	tc=sl;                                //tc始终指向尾结点 ，初始时指向头结点 
+	printf("字符串数：");
+	scanf("%d",&n);
+	for(i=0;i<n;i++)
+	{
+		s=(Strlist*)malloc(sizeof(Strlist)); //创建新结点s 
+		printf("第%d个字符串为：",i+1);   //扫描进n个字符串组成单链表 
+		scanf("%s",s->str);
+		tc->next=s;                      //将s结点插入tc结点之后 
+		tc=s;                            //结点s变成新的尾结点，让tc指向它 
+	}
+	tc->next=NULL;                       //尾结点next域置为NULL 
+}
+
+/*********************************************************
+函数功能：单链表进行排序 
+形式参数：L 引用单链表 
+返回值：无 
+**********************************************************/ 
+void Sortlist(Strlist *&L)              //对链表中的字符进行排序 
+{
+	Strlist *p,*pre,*q;
+	p=L->next->next;                    //p指向L的第二个数据点 
+	L->next->next=NULL;                 //构造只含一个数据结点的有序表 
+	while(p!=NULL) 
+	{
+		q=p->next;                      //q结点保存p结点后继结点的指针 
+		pre=L;                          //从有序表开头进行比较，pre指向插入p结点的前驱结点 
+		while(pre->next!=NULL && pre->next->str[0]<p->str[0])
+		  pre=pre->next;                //在有序表中找插入p结点的前驱结点pre 
+		p->next=pre->next;              //在pre结点之后插入p结点 
+		pre->next=p;
+		p=q;                            //扫描原单链表余下的结点 
+	}
+}
+
+/*********************************************************
+函数功能：遍历单链表，按顺序输出单链表的元素 
+形式参数：L  单链表 
+返回值：无 
+**********************************************************/ 
+void Displist(Strlist *L)        //遍历字符串 
+{
+	Strlist *p=L->next;           
+	int i=1;
+	printf("排序后为:\n");
+	while(p!=NULL)
+	{
+		printf("%s\n",p->str);
+		p=p->next;              //p后移 
+	}
+}
+
+/*********************************************************
+函数功能：将单链表逆置 
+形式参数：L 引用单链表 
+返回值：无 
+**********************************************************/ 
+void Reverse(Strlist *&L)    //将字符串逆置 
+{
+	//断开成两个链表
+	Strlist *p = L->next,*q;  //数据链表
+	L->next = NULL;          //带头结点的空链表
+ 
+	while (p!=NULL)
+	{
+		q = p->next;        //待插入节点
+		p->next = L->next;  //数据链表前进一格
+		//使用头插法
+		L->next = p;
+		p=q;
+	}
+}
+
+/*********************************************************
+函数功能：删除单链表中排序为n的元素 
+形式参数：L 引用单链表
+          n  整型  表示排序为n 
+返回值：1 或 0  整型 
+**********************************************************/ 
+int Delelem(Strlist *&L, int n) //删除链表中排序为n的元素 
+{
+    Strlist* p1 = L;          //建立两个结点，从首结点开始扫描 
+    Strlist* p2 = L;
+    int i;
+    int flag = 0;
+    
+    if (n == 0) {             //参数错误，返回0 
+        return 0;
+    }
+    
+    if ((L->next == NULL) && (n ==1)) {   //空表不能删除 
+        return NULL;
+    }
+    
+    for (i = 0; i < n; i++) {
+        p1 = p1-> next;     //p1不断向后寻找 
+    }
+    
+    if (p1 == NULL) {       //未找到 
+        L = L->next;
+        return 1;
+    }
+    
+    while (p1->next) {
+        p1 = p1->next;     //p1，p2同步后移 
+        p2 = p2->next;
+    }
+    
+    p2->next = p2->next->next;  //指向后一个结点 
+    
+    return 1;
+}
+
+/***********
+主函数 
+***********/ 
+int main() //主函数，进行一系列命令 
+{           
+    int n;      
+    Strlist *st;
+    printf("建立字符串单链表\n");
+    CreateStrlist(st);        //创建单链表 
+    printf("按字典序排列\n");
+    Sortlist(st);             //对链表中的元素排序 
+    Displist(st);             //遍历该链表 
+    printf("按倒序排列\n");
+    Reverse(st);              //将该链表逆置 
+    Displist(st);             //遍历该链表 
+    printf("请输入数字n:\n");
+    scanf("%d",&n);
+    Delelem(st, n);           //删除排序n的元素 
+    printf("删除后倒序:\n");
+    Displist(st);             //输出 
+    
+    return 0;
+}  
