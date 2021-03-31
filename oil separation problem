@@ -1,0 +1,148 @@
+#include<cstring>
+#include<cstdio>
+#include<queue>
+#include<iostream>
+using namespace std;
+
+/**************************************************************************************************
+函数功能：实现广度优先遍历算法，广度优先以牺牲空间代价和时间代价来换取保证取得最优解。
+          函数中还设置了变量用于判重，来减小搜索量，达到最优解
+形式参数：a 整型 输入的第一个瓶子的容量，也就是装满油的油量 
+          b 整型 第二个瓶子的容量 
+		  c 整型 第三个瓶子的容量 
+		  n 待分出的油的油量
+返回值：无 
+**************************************************************************************************/
+void bfs(int a,int b,int c,int n){
+	queue<int>x,y,z,ans;                 //设置队列 
+    bool g[101][101][101];               //用于判重 
+    bool flag=false;                     //设置标志用来判断是否达到目标状态 
+	x.push(a);y.push(0);z.push(0);ans.push(0);  //存入数据 
+  do                         //用do-while，至少会做一次，恰好也处理了初始状态等于目标状态的情况
+    {
+      int x1=x.front();      //返回队列第一个元素值 
+      int y1=y.front();
+      int z1=z.front();
+      int t=ans.front();     //用于计算步数 
+      if(x1+y1+z1==a)        //剔除搜索的过程，输出每一步各瓶子油量的变化 
+	  {
+      	printf("%d ",x1);
+        printf("%d ",y1);
+        printf("%d ",z1);
+        printf("\n");
+	  } 
+      
+      if(x1==n||y1==n||z1==n)  //如果出现了目标状态，跳出循环
+    {
+      flag=true;               //标志改变 
+      break;
+    }
+      if(x1>0)               //如果1有油，就枚举1倒油的几种情况
+    {                        
+      if(g[x1-min(x1,b-y1)][y1+min(x1,b-y1)][z1]==0 && b-y1>0)  //倒1->2
+        {                                              //这个状态如果没有到过，并且2可以倒出y1体积的油
+          g[x1-min(x1,b-y1)][y1+min(x1,b-y1)][z1]=1;   //该状态设置为出现过，用于判重 
+          x.push(x1-min(x1,b-y1));                    //进队列 
+          y.push(y1+min(x1,b-y1));
+          z.push(z1);         //存入
+          ans.push(t+1);     //保存该步
+        }
+      
+      if(g[x1-min(x1,c-z1)][y1][z1+min(x1,c-z1)]==0&&c-z1>0)    //倒1->3
+        {                                
+          g[x1-min(x1,c-z1)][y1][z1+min(x1,c-z1)]=1;            //原理同上 
+          x.push(x1-min(x1,c-z1));
+          y.push(y1);
+          z.push(z1+min(x1,c-z1));
+          ans.push(t+1);
+        }
+      if(g[0][y1][z1]==0)                                     //倒空
+        {
+          g[0][y1][z1]=1;                                     //原理同上 
+          x.push(0);
+          y.push(y1);
+          z.push(z1);
+          ans.push(t+1);
+        }
+    }
+      if(y1>0)
+    {
+      if(g[x1][y1-min(y1,c-z1)][z1+min(y1,c-z1)]==0&&c-z1>0)       //倒2->3
+        {
+          g[x1][y1-min(y1,c-z1)][z1+min(y1,c-z1)]=1;               //原理同上 
+          x.push(x1);
+          y.push(y1-min(y1,c-z1));
+          z.push(z1+min(y1,c-z1));
+          ans.push(t+1);
+        }
+      if(g[x1+min(y1,a-x1)][y1-min(y1,a-x1)][z1]==0&&a-x1>0)      //倒2->1
+        {
+          g[x1+min(y1,a-x1)][y1-min(y1,a-x1)][z1]=1;              //原理同上 
+          x.push(x1+min(y1,a-x1));
+          y.push(y1-min(y1,a-x1));
+          z.push(z1);
+          ans.push(t+1);
+        }
+      if(g[x1][0][z1]==0)                                        //倒完 
+        {
+          g[x1][0][z1]=1;                                        //原理同上 
+          x.push(x1);
+          y.push(0);
+          z.push(z1);
+          ans.push(t+1);
+        }
+    }
+      if(z1>0)
+    {
+      if(g[x1][y1+min(z1,b-y1)][z1-min(z1,b-y1)]==0&&b-y1>0)   //倒3->1
+        {
+          g[x1][y1+min(z1,b-y1)][z1-min(z1,b-y1)]=1;           //原理同上 
+          x.push(x1);
+          y.push(y1+min(z1,b-y1));
+          z.push(z1-min(z1,b-y1));
+          ans.push(t+1);
+        }
+      if(g[x1+min(z1,a-x1)][y1][z1-min(z1,a-x1)]==0&&a-x1>0)  //倒3->2
+        {
+          g[x1+min(z1,a-x1)][y1][z1-min(z1,a-x1)]=1;          //原理同上 
+          x.push(x1+min(z1,a-x1));
+          y.push(y1);
+          z.push(z1-min(z1,a-x1));
+          ans.push(t+1);
+        }
+      if(g[x1][y1][0]==0)                  //倒完不要了
+        {
+          g[x1][y1][0]=1;                  //原理同上 
+          x.push(x1);
+          y.push(y1);
+          z.push(0);
+          ans.push(t+1);
+        }
+    }
+      ans.pop();          //出队列 
+      x.pop();
+      y.pop();
+      z.pop();
+    }while(!x.empty());    //状态没有枚举完
+  if(flag==true)           //达到目标状态 
+    printf("最少步数为:%d",ans.front());   //输出总步数 
+  else
+    printf("NO ANSWER!");
+}
+             
+
+
+int main()
+{
+  int a,b,c,n;
+  printf("请输入各油桶的容量（默认第一个桶装满，另外两个桶为空），以及希望分出的油量\n");
+  scanf("%d%d%d%d",&a,&b,&c,&n);
+  if(a<n)                     //如果油量起始值小于目标值，则不可能实现 
+    {
+      printf("NO ANSWER!");
+      return 0;
+    }
+  
+  bfs(a,b,c,n);              //广度优先遍历 
+  return 0;
+}
